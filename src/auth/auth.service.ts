@@ -12,9 +12,9 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class AuthService {
   constructor(
-  private prisma: PrismaService,
-  private jwtService: JwtService,
-) {}
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
   async register(registerDto: RegisterDto) {
     const { firstName, lastName, email, phone, password } = registerDto;
@@ -86,24 +86,49 @@ export class AuthService {
     }
 
     const payload = {
-  sub: user.id,
-  email: user.email,
-};
+      sub: user.id,
+      email: user.email,
+    };
 
-const accessToken = await this.jwtService.signAsync(payload);
+    const accessToken = await this.jwtService.signAsync(payload);
 
-return {
-  success: true,
-  message: 'Login successful',
-  accessToken,
-  data: {
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    phone: user.phone,
-    createdAt: user.createdAt,
-  },
-};
+    return {
+      success: true,
+      message: 'Login successful',
+      accessToken,
+      data: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        createdAt: user.createdAt,
+      },
+    };
+  }
+
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return {
+      success: true,
+      data: user,
+    };
   }
 }
